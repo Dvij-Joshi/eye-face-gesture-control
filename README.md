@@ -4,7 +4,7 @@ An Android accessibility application that allows device navigation and control u
 
 ## Overview
 
-This project provides an alternative input method for Android devices. By leveraging the device's front-facing camera, it maps head tilt (yaw/pitch) to cursor movement and specific facial blendshapes to system-level actions like clicking and scrolling.
+This project provides an alternative, hands-free input method for Android devices, designed specifically to assist individuals with motor disabilities, paralysis, or other physical impairments. By leveraging the device's front-facing camera, it maps head tilt (yaw/pitch) to cursor movement and specific facial blendshapes to system-level actions like clicking and scrolling, enabling full device control without requiring physical touch.
 
 Currently, this represents an early V1/V2 implementation. The application is functional but actively being refined. Users may encounter edge-case bugs or calibration inconsistencies depending on lighting and camera hardware. We are aware there is significant room for improvement, and optimizations to the smoothing algorithms and gesture recognition state machines are ongoing.
 
