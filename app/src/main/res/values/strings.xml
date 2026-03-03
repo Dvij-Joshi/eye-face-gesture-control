@@ -1,0 +1,129 @@
+<resources>
+    <!-- App Name -->
+    <string name="app_name">Eye Control</string>
+    
+    <!-- Accessibility Service -->
+    <string name="accessibility_service_description">Eye Control allows you to control your phone using facial gestures and eye movements. This service needs accessibility permissions to perform actions like clicking, scrolling, and navigation on your behalf.\n\nYour privacy is protected: all processing happens on your device, and your camera feed is never recorded or transmitted.</string>
+    <string name="accessibility_service_name">Eye Control Service</string>
+    
+    <!-- Main Activity -->
+    <string name="btn_start_service">Start Eye Control</string>
+    <string name="btn_stop_service">Stop Eye Control</string>
+    <string name="btn_calibrate">Calibrate</string>
+    <string name="btn_settings">Settings</string>
+    <string name="service_status_running">Service Running</string>
+    <string name="service_status_stopped">Service Stopped</string>
+    <string name="current_gesture_label">Last Gesture:</string>
+    <string name="no_gesture_detected">No gesture detected</string>
+    
+    <!-- Permissions -->
+    <string name="permission_camera_rationale">Eye Control needs camera access to track your face and detect gestures.</string>
+    <string name="permission_overlay_rationale">Eye Control needs overlay permission to display the cursor and visual feedback on your screen.</string>
+    <string name="permission_accessibility_title">Enable Accessibility Service</string>
+    <string name="permission_accessibility_message">Eye Control requires accessibility permissions to perform actions system-wide. Please enable "Eye Control Service" in the next screen.</string>
+    <string name="btn_open_settings">Open Settings</string>
+    <string name="btn_grant_permission">Grant Permission</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Welcome to Eye Control</string>
+    <string name="onboarding_welcome_desc">Control your phone hands-free using facial gestures and eye movements.</string>
+    <string name="onboarding_permissions_title">Grant Permissions</string>
+    <string name="onboarding_permissions_desc">We need a few permissions to get started.</string>
+    <string name="onboarding_accessibility_title">Enable Accessibility</string>
+    <string name="onboarding_accessibility_desc">This allows Eye Control to interact with your phone.</string>
+    <string name="onboarding_calibration_title">Calibration</string>
+    <string name="onboarding_calibration_desc">Let\'s personalize the app for your face.</string>
+    <string name="onboarding_tutorial_title">Practice Gestures</string>
+    <string name="onboarding_tutorial_desc">Try out each gesture and see how it works.</string>
+    <string name="btn_next">Next</string>
+    <string name="btn_skip">Skip</string>
+    <string name="btn_finish">Finish</string>
+    
+    <!-- Calibration -->
+    <string name="calibration_phase_center">Look at the center crosshair</string>
+    <string name="calibration_phase_blink">Blink 5 times normally</string>
+    <string name="calibration_phase_squint">Squint quickly 5 times</string>
+    <string name="calibration_phase_wink_left">Wink your left eye</string>
+    <string name="calibration_phase_wink_right">Wink your right eye</string>
+    <string name="calibration_phase_eyebrow_raise">Raise your eyebrows</string>
+    <string name="calibration_phase_eyebrow_lower">Lower your eyebrows (frown)</string>
+    <string name="calibration_phase_mouth">Open your mouth wide</string>
+    <string name="calibration_instructions">Keep your head still and follow the instructions</string>
+    <string name="calibration_progress">Progress: %d/%d</string>
+    <string name="calibration_success">Calibration complete!</string>
+    <string name="btn_recalibrate">Recalibrate</string>
+    <string name="btn_test_gestures">Test Gestures</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_cursor_title">Cursor Settings</string>
+    <string name="settings_cursor_sensitivity">Cursor Sensitivity</string>
+    <string name="settings_cursor_size">Cursor Size</string>
+    <string name="settings_gestures_title">Gesture Settings</string>
+    <string name="settings_gesture_sensitivity">Gesture Sensitivity</string>
+    <string name="settings_enable_click">Enable Click (Squint)</string>
+    <string name="settings_enable_long_press">Enable Long Press</string>
+    <string name="settings_enable_wink_left">Enable Wink Left (Back)</string>
+    <string name="settings_enable_wink_right">Enable Wink Right (Home)</string>
+    <string name="settings_enable_double_blink">Enable Double Blink (Recent Apps)</string>
+    <string name="settings_enable_scroll">Enable Scroll (Eyebrows)</string>
+    <string name="settings_enable_voice">Enable Voice Input (Mouth)</string>
+    <string name="settings_feedback_title">Feedback Settings</string>
+    <string name="settings_visual_feedback">Visual Feedback</string>
+    <string name="settings_haptic_feedback">Haptic Feedback</string>
+    <string name="settings_audio_feedback">Audio Feedback</string>
+    <string name="settings_talkback_announcements">TalkBack Announcements</string>
+    <string name="settings_advanced_title">Advanced Settings</string>
+    <string name="settings_show_face_mesh">Show Face Mesh (Debug)</string>
+    <string name="settings_high_contrast_cursor">High Contrast Cursor</string>
+    <string name="settings_auto_pause">Auto-Pause After 30 Minutes</string>
+    <string name="btn_reset_defaults">Reset to Defaults</string>
+    <string name="settings_reset_confirm">Reset all settings to defaults?</string>
+    
+    <!-- Gestures -->
+    <string name="gesture_click">Click</string>
+    <string name="gesture_long_press">Long Press</string>
+    <string name="gesture_wink_left">Back</string>
+    <string name="gesture_wink_right">Home</string>
+    <string name="gesture_double_blink">Recent Apps</string>
+    <string name="gesture_scroll_up">Scroll Up</string>
+    <string name="gesture_scroll_down">Scroll Down</string>
+    <string name="gesture_voice_input">Voice Input</string>
+    
+    <!-- Notifications -->
+    <string name="notification_channel_name">Eye Control Service</string>
+    <string name="notification_channel_desc">Notification for Eye Control service status</string>
+    <string name="notification_title">Eye Control Active</string>
+    <string name="notification_text">Tap for settings or to stop</string>
+    <string name="notification_action_settings">Settings</string>
+    <string name="notification_action_stop">Stop</string>
+    <string name="notification_fatigue_title">Take a Break</string>
+    <string name="notification_fatigue_text">You\'ve been using Eye Control for 30 minutes. Consider taking a rest.</string>
+    
+    <!-- Errors & Warnings -->
+    <string name="error_no_face_detected">No face detected</string>
+    <string name="error_multiple_faces">Multiple faces detected</string>
+    <string name="error_low_light">Improve lighting for better tracking</string>
+    <string name="error_camera_permission_denied">Camera permission is required</string>
+    <string name="error_camera_failed">Camera initialization failed</string>
+    <string name="error_mediapipe_failed">Face detection failed</string>
+    <string name="warning_glasses">Wearing glasses may reduce accuracy</string>
+    
+    <!-- TalkBack Announcements -->
+    <string name="talkback_click">Click detected</string>
+    <string name="talkback_long_press">Long press detected</string>
+    <string name="talkback_wink_left">Navigating back</string>
+    <string name="talkback_wink_right">Going home</string>
+    <string name="talkback_double_blink">Opening recent apps</string>
+    <string name="talkback_scroll_up">Scrolling up</string>
+    <string name="talkback_scroll_down">Scrolling down</string>
+    <string name="talkback_voice_input">Voice input activated</string>
+    <string name="talkback_service_started">Eye Control service started</string>
+    <string name="talkback_service_stopped">Eye Control service stopped</string>
+    
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+</resources>

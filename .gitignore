@@ -1,0 +1,25 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/app/build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Python
+__pycache__/
+*.pyc
+PCV/__pycache__/
+
+# Generated
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Build error logs
+build_errors*.txt
