@@ -307,6 +307,14 @@ class FaceTrackingService : LifecycleService() {
         serviceScope.cancel()
         ServiceHelper.setRunning(this, false)
     }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        // Called when user swipes app from recents — mark service as stopped
+        Log.i(TAG, "Task removed (app swiped from recents)")
+        ServiceHelper.setRunning(this, false)
+        stopSelf()
+    }
     
     /**
      * Helper to start/stop service from outside.
@@ -323,6 +331,10 @@ class FaceTrackingService : LifecycleService() {
         fun syncState(context: Context) {
             isRunning = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
                 .getBoolean(KEY, false)
+            // Update the UI bus too
+            GestureEventBus.updateServiceState(
+                com.example.eyeandfacegesturephonecontrol.common.ServiceState(isRunning = isRunning)
+            )
         }
 
         internal fun setRunning(context: Context, running: Boolean) {
@@ -335,6 +347,10 @@ class FaceTrackingService : LifecycleService() {
         }
         
         fun start(context: Context) {
+            // Always clear stale state first — handles case where app was killed
+            // from recents and onDestroy never ran
+            setRunning(context, false)
+            
             val intent = Intent(context, FaceTrackingService::class.java).apply {
                 action = ACTION_START
             }
@@ -348,10 +364,14 @@ class FaceTrackingService : LifecycleService() {
         }
         
         fun stop(context: Context) {
-            val intent = Intent(context, FaceTrackingService::class.java).apply {
-                action = ACTION_STOP
+            try {
+                val intent = Intent(context, FaceTrackingService::class.java).apply {
+                    action = ACTION_STOP
+                }
+                context.startService(intent)
+            } catch (e: Exception) {
+                Log.w("ServiceHelper", "Service already stopped: ${e.message}")
             }
-            context.startService(intent)
             setRunning(context, false)
         }
     }

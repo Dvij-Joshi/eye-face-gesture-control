@@ -12,9 +12,10 @@ import kotlin.math.*
  *
  * Uses:
  * - Facial transformation matrix → Euler angles → direct screen mapping
- * - Blendshape scores for gestures (jawOpen, browInnerUp, eyeBlinkRight/Left)
- * - 1D Kalman filters for smooth cursor
+ * - Blendshape scores for gestures (browInnerUp, browDown, eyeBlinkRight/Left)
+ * - Double Kalman filters for ultra-smooth cursor (Kalman + EMA)
  * - GestureStateMachine with dwell time to prevent accidental triggers
+ * - Gesture exclusion: winking suppresses scroll to avoid cross-trigger
  * - Distance-adaptive sensitivity via face scale measurement
  */
 class GestureRecognizer(
@@ -31,6 +32,7 @@ class GestureRecognizer(
         val pitch: Float = 0f,
         val jawOpen: Float = 0f,
         val browInnerUp: Float = 0f,
+        val browDown: Float = 0f,
         val blinkR: Float = 0f,
         val blinkL: Float = 0f,
         val cursorX: Float = 0.5f,
@@ -60,6 +62,8 @@ class GestureRecognizer(
             x = value
             P = 1f
         }
+
+        fun value(): Float = x
     }
 
     // ── Gesture State Machine ────────────────────
@@ -101,12 +105,7 @@ class GestureRecognizer(
             return fired
         }
 
-        fun getProgress(nowMs: Long): Float {
-            if (state == State.DETECTING) {
-                return ((nowMs - startTime).toFloat() / dwellMs).coerceIn(0f, 1f)
-            }
-            return 0f
-        }
+        fun isActive(): Boolean = state == State.DETECTING || state == State.COOLDOWN
 
         fun reset() {
             state = State.IDLE
@@ -119,6 +118,11 @@ class GestureRecognizer(
     private val kfX = KalmanFilter1D(calibrationData.kalmanProcess, calibrationData.kalmanMeasure)
     private val kfY = KalmanFilter1D(calibrationData.kalmanProcess, calibrationData.kalmanMeasure)
     private var cursorInitialized = false
+
+    // Extra EMA smoothing layer on top of Kalman (reduces micro-jitter)
+    private var emaX = 0.5f
+    private var emaY = 0.5f
+    private val emaAlpha = 0.35f  // 0 = frozen, 1 = no smoothing. 0.35 is a good balance
 
     // ── Gesture state machines ───────────────────
     // Winks → clicks
@@ -168,7 +172,7 @@ class GestureRecognizer(
             var deltaYaw   = yaw   - calibrationData.refYaw
             var deltaPitch = pitch - calibrationData.refPitch
 
-            // Dead zone
+            // Dead zone — slightly larger to cut micro-movements
             deltaYaw   = applyDeadZone(deltaYaw,   calibrationData.deadZoneDeg)
             deltaPitch = applyDeadZone(deltaPitch, calibrationData.deadZoneDeg)
 
@@ -182,15 +186,25 @@ class GestureRecognizer(
             val targetX = 0.5f + normX * 0.5f
             val targetY = 0.5f + normY * 0.5f
 
-            // Initialize Kalman on first frame
+            // Initialize on first frame
             if (!cursorInitialized) {
                 kfX.set(targetX)
                 kfY.set(targetY)
+                emaX = targetX
+                emaY = targetY
                 cursorInitialized = true
             }
 
-            val smoothX = kfX.update(targetX).coerceIn(0f, 1f)
-            val smoothY = kfY.update(targetY).coerceIn(0f, 1f)
+            // Layer 1: Kalman filter (handles sensor noise)
+            val kalmanX = kfX.update(targetX).coerceIn(0f, 1f)
+            val kalmanY = kfY.update(targetY).coerceIn(0f, 1f)
+
+            // Layer 2: EMA smoothing (handles remaining micro-jitter)
+            emaX = emaX + emaAlpha * (kalmanX - emaX)
+            emaY = emaY + emaAlpha * (kalmanY - emaY)
+
+            val smoothX = emaX.coerceIn(0f, 1f)
+            val smoothY = emaY.coerceIn(0f, 1f)
 
             gestures.add(GestureEvent.CursorMove(smoothX, smoothY))
 
@@ -210,44 +224,57 @@ class GestureRecognizer(
             val browDownR    = blendshapes["browDownRight"]  ?: 0f
             val browDown     = (browDownL + browDownR) / 2f
 
-            // Left wink → Left click  (left eye closed, right eye OPEN)
-            if (winkLFSM.update(eyeBlinkL > calibrationData.winkLThreshold && eyeBlinkR < 0.3f, nowMs)) {
-                Log.i(TAG, "🔥 LEFT CLICK via left wink (blinkL=$eyeBlinkL, blinkR=$eyeBlinkR)")
+            // ── Check winks FIRST (higher priority) ───
+            val isWinkingL = eyeBlinkL > calibrationData.winkLThreshold && eyeBlinkR < 0.3f
+            val isWinkingR = eyeBlinkR > calibrationData.winkRThreshold && eyeBlinkL < 0.3f
+            val anyWinkActive = isWinkingL || isWinkingR || winkLFSM.isActive() || winkRFSM.isActive()
+
+            // Left wink → Left click
+            if (winkLFSM.update(isWinkingL, nowMs)) {
+                Log.i(TAG, "🔥 LEFT CLICK via left wink (blinkL=$eyeBlinkL)")
                 gestures.add(GestureEvent.Click)
                 _lastGesture.value = GestureEvent.Click
             }
 
-            // Right wink → Right click  (right eye closed, left eye OPEN)
-            if (winkRFSM.update(eyeBlinkR > calibrationData.winkRThreshold && eyeBlinkL < 0.3f, nowMs)) {
-                Log.i(TAG, "🔥 RIGHT CLICK via right wink (blinkR=$eyeBlinkR, blinkL=$eyeBlinkL)")
+            // Right wink → Right click
+            if (winkRFSM.update(isWinkingR, nowMs)) {
+                Log.i(TAG, "🔥 RIGHT CLICK via right wink (blinkR=$eyeBlinkR)")
                 gestures.add(GestureEvent.WinkRight)
                 _lastGesture.value = GestureEvent.WinkRight
             }
 
-            // Eyebrow raise → Scroll Up
-            if (browUpFSM.update(browInnerUp > calibrationData.browUpThreshold, nowMs)) {
-                Log.i(TAG, "🔥 SCROLL UP (browInnerUp=$browInnerUp > ${calibrationData.browUpThreshold})")
-                gestures.add(GestureEvent.Scroll(ScrollDirection.UP, 1f))
-                _lastGesture.value = GestureEvent.Scroll(ScrollDirection.UP, 1f)
-            }
+            // ── Brow gestures ONLY if no wink is active ───
+            // This prevents scroll triggers when a wink naturally moves the brows
+            if (!anyWinkActive) {
+                // Eyebrow raise → Scroll Up
+                if (browUpFSM.update(browInnerUp > calibrationData.browUpThreshold, nowMs)) {
+                    Log.i(TAG, "🔥 SCROLL UP (browInnerUp=$browInnerUp > ${calibrationData.browUpThreshold})")
+                    gestures.add(GestureEvent.Scroll(ScrollDirection.UP, 1f))
+                    _lastGesture.value = GestureEvent.Scroll(ScrollDirection.UP, 1f)
+                }
 
-            // Eyebrow squint/furrow → Scroll Down
-            if (browDownFSM.update(browDown > calibrationData.browDownThreshold, nowMs)) {
-                Log.i(TAG, "🔥 SCROLL DOWN (browDown=$browDown > ${calibrationData.browDownThreshold})")
-                gestures.add(GestureEvent.Scroll(ScrollDirection.DOWN, 1f))
-                _lastGesture.value = GestureEvent.Scroll(ScrollDirection.DOWN, 1f)
+                // Eyebrow squint/furrow → Scroll Down
+                if (browDownFSM.update(browDown > calibrationData.browDownThreshold, nowMs)) {
+                    Log.i(TAG, "🔥 SCROLL DOWN (browDown=$browDown > ${calibrationData.browDownThreshold})")
+                    gestures.add(GestureEvent.Scroll(ScrollDirection.DOWN, 1f))
+                    _lastGesture.value = GestureEvent.Scroll(ScrollDirection.DOWN, 1f)
+                }
+            } else {
+                // Reset brow FSMs to prevent accumulated dwell time from before the wink
+                browUpFSM.reset()
+                browDownFSM.reset()
             }
         }
 
         // ── 3. Update debug info ─────────────────────
-        val angles = extractHeadAngles(result)
         val bs = extractBlendshapes(result)
         val curPos = gestures.filterIsInstance<GestureEvent.CursorMove>().lastOrNull()
         lastDebugInfo = DebugInfo(
-            yaw = angles?.first ?: 0f,
-            pitch = angles?.second ?: 0f,
+            yaw = headAngles?.first ?: 0f,
+            pitch = headAngles?.second ?: 0f,
             jawOpen = bs?.get("jawOpen") ?: 0f,
             browInnerUp = bs?.get("browInnerUp") ?: 0f,
+            browDown = ((bs?.get("browDownLeft") ?: 0f) + (bs?.get("browDownRight") ?: 0f)) / 2f,
             blinkR = bs?.get("eyeBlinkRight") ?: 0f,
             blinkL = bs?.get("eyeBlinkLeft") ?: 0f,
             cursorX = curPos?.x ?: lastDebugInfo.cursorX,
@@ -269,20 +296,17 @@ class GestureRecognizer(
         val matrixes = result.facialTransformationMatrixes()
         if (!matrixes.isPresent || matrixes.get().isEmpty()) return null
 
-        // facialTransformationMatrixes() returns List<float[]>
         val m: FloatArray = matrixes.get()[0]
         if (m.size < 16) return null
 
         // MediaPipe returns a 4x4 COLUMN-MAJOR transformation matrix
-        // Column-major: R[row][col] = m[col*4 + row]
-        val r02: Float = m[2 * 4 + 0]   // row 0, col 2
-        val r12: Float = m[2 * 4 + 1]   // row 1, col 2
-        val r22: Float = m[2 * 4 + 2]   // row 2, col 2
+        val r02: Float = m[2 * 4 + 0]
+        val r12: Float = m[2 * 4 + 1]
+        val r22: Float = m[2 * 4 + 2]
 
-        // Correct Euler angle extraction for MediaPipe's coordinate system
         val negR12: Float = -r12
-        val pitch = Math.toDegrees(asin(negR12.toDouble().coerceIn(-1.0, 1.0))).toFloat()   // up/down
-        val yaw   = Math.toDegrees(atan2(r02.toDouble(), r22.toDouble())).toFloat()           // left/right
+        val pitch = Math.toDegrees(asin(negR12.toDouble().coerceIn(-1.0, 1.0))).toFloat()
+        val yaw   = Math.toDegrees(atan2(r02.toDouble(), r22.toDouble())).toFloat()
 
         return Pair(yaw, pitch)
     }
@@ -320,7 +344,6 @@ class GestureRecognizer(
     private fun calculateDistanceMultiplier(result: FaceLandmarkerResult): Float {
         if (!calibrationData.adaptSensitivity) return 1f
 
-        // Face scale = distance between outer eye corners
         val leftOuter  = result.getLandmark(LandmarkIndices.LEFT_EYE_OUTER)  ?: return 1f
         val rightOuter = result.getLandmark(LandmarkIndices.RIGHT_EYE_OUTER) ?: return 1f
         val faceScale = sqrt(
