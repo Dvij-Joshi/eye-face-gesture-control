@@ -46,6 +46,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        // Sync persisted service state after app restart / process death
+        FaceTrackingService.ServiceHelper.syncState(this)
+        updateServiceStatus(FaceTrackingService.ServiceHelper.isRunning)
         checkPermissions()
     }
 
@@ -73,9 +76,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, OnboardingActivity::class.java))
         }
         
-        binding.btnEARCalibration.setOnClickListener {
-            startActivity(Intent(this, com.example.eyeandfacegesturephonecontrol.ui.EARCalibrationActivity::class.java))
-        }
+        // EAR calibration removed (legacy, no longer used)
         
         binding.tvPermissionWarning.setOnClickListener {
              if (!PermissionUtils.hasCameraPermission(this)) {

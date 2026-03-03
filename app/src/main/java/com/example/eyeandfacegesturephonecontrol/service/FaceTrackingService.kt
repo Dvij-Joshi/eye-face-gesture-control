@@ -305,20 +305,46 @@ class FaceTrackingService : LifecycleService() {
         faceMeshDetector.close()
         cameraManager.shutdown()
         serviceScope.cancel()
+        ServiceHelper.setRunning(this, false)
     }
     
     /**
-     * Helper methods to start/stop service from outside
+     * Helper to start/stop service from outside.
+     * Uses SharedPreferences so isRunning survives app process death.
      */
     object ServiceHelper {
+        private const val PREF = "service_state"
+        private const val KEY  = "is_running"
+
         var isRunning = false
+            private set
+
+        /** Check persisted state — call from Activity.onResume */
+        fun syncState(context: Context) {
+            isRunning = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+                .getBoolean(KEY, false)
+        }
+
+        internal fun setRunning(context: Context, running: Boolean) {
+            isRunning = running
+            context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+                .edit().putBoolean(KEY, running).apply()
+            GestureEventBus.updateServiceState(
+                com.example.eyeandfacegesturephonecontrol.common.ServiceState(isRunning = running)
+            )
+        }
         
         fun start(context: Context) {
             val intent = Intent(context, FaceTrackingService::class.java).apply {
                 action = ACTION_START
             }
-            androidx.core.content.ContextCompat.startForegroundService(context, intent)
-            isRunning = true
+            try {
+                androidx.core.content.ContextCompat.startForegroundService(context, intent)
+                setRunning(context, true)
+            } catch (e: Exception) {
+                Log.e("ServiceHelper", "Failed to start service", e)
+                setRunning(context, false)
+            }
         }
         
         fun stop(context: Context) {
@@ -326,7 +352,7 @@ class FaceTrackingService : LifecycleService() {
                 action = ACTION_STOP
             }
             context.startService(intent)
-            isRunning = false
+            setRunning(context, false)
         }
     }
 }

@@ -32,7 +32,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Sensitivity"
+                android:text="Head Movement Range"
                 android:textSize="@dimen/text_size_title"
                 android:textStyle="bold"
                 android:textColor="@color/black"
@@ -54,49 +54,67 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Cursor Speed (X-Axis)"
+                        android:text="Max Yaw (left/right degrees)"
                         android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Lower = more sensitive (less head turn needed)"
+                        android:textSize="12sp"
+                        android:textColor="#888888"/>
 
                     <com.google.android.material.slider.Slider
                         android:id="@+id/sliderSensitivityX"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:valueFrom="1.0"
-                        android:valueTo="5.0"
-                        android:stepSize="0.1"
-                        android:value="2.5"/>
+                        android:valueFrom="3.0"
+                        android:valueTo="20.0"
+                        android:stepSize="0.5"
+                        android:value="8.0"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Cursor Speed (Y-Axis)"
+                        android:text="Max Pitch (up/down degrees)"
                         android:textStyle="bold"
                         android:layout_marginTop="@dimen/spacing_small"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Lower = more sensitive"
+                        android:textSize="12sp"
+                        android:textColor="#888888"/>
 
                     <com.google.android.material.slider.Slider
                         android:id="@+id/sliderSensitivityY"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:valueFrom="1.0"
-                        android:valueTo="5.0"
-                        android:stepSize="0.1"
-                        android:value="2.0"/>
+                        android:valueFrom="2.0"
+                        android:valueTo="15.0"
+                        android:stepSize="0.5"
+                        android:value="6.0"/>
                         
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Smoothing (Higher = Less Jitter)"
+                        android:text="Smoothing (Kalman filter)"
                         android:textStyle="bold"
                         android:layout_marginTop="@dimen/spacing_small"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Higher = smoother but slightly laggier"
+                        android:textSize="12sp"
+                        android:textColor="#888888"/>
 
                     <com.google.android.material.slider.Slider
                         android:id="@+id/sliderSmoothing"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:valueFrom="0.1"
-                        android:valueTo="0.9"
+                        android:valueTo="3.0"
                         android:stepSize="0.1"
-                        android:value="0.3"/>
+                        android:value="0.8"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
